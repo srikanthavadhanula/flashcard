@@ -1,22 +1,39 @@
-import logo from './logo.svg';
+import React, { useState } from 'react';
 import './App.css';
+import FlashcardForm from './components/FlashcardForm';
+import FlashcardList from './components/FlashcardList';
 
 function App() {
+  const [flashcards, setFlashcards] = useState([]);
+  const [showForm, setShowForm] = useState(false);
+
+  const addFlashcard = (question, answer) => {
+    const newFlashcard = {
+      id: Date.now(), // Simple ID generation
+      question,
+      answer
+    };
+    setFlashcards([...flashcards, newFlashcard]);
+    setShowForm(false); // Hide form after submission
+  };
+
   return (
     <div className="App">
       <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
+        <h1>Flashcard Application</h1>
+        
+        <button 
+          className="create-btn"
+          onClick={() => setShowForm(!showForm)}
         >
-          Learn React
-        </a>
+          {showForm ? 'Cancel' : 'Create Flashcard'}
+        </button>
+
+        {showForm && (
+          <FlashcardForm onSubmit={addFlashcard} />
+        )}
+
+        <FlashcardList flashcards={flashcards} />
       </header>
     </div>
   );
