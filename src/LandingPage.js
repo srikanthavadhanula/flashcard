@@ -6,25 +6,13 @@ function LandingPage() {
   const { setUser } = useContext(AuthContext);
 
   return (
-    <div style={{
-      minHeight: "70vh",
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-      justifyContent: "center"
-    }}>
-      <h1 style={{ fontSize: "2.5rem", color: "#3f51b5", marginBottom: "1rem" }}>
+    <div className="min-h-[70vh] flex flex-col items-center justify-center px-4">
+      <h1 className="text-4xl font-bold text-indigo-700 mb-3 text-center">
         Welcome to Flashcards!
       </h1>
-      <p style={{
-        maxWidth: 440,
-        textAlign: "center",
-        color: "#444",
-        marginBottom: 24
-      }}>
-        The minimalist, user-friendly way to test your knowledge or learn new things.
-        <br />
-        Create, flip, and manage your flashcards with ease—your learning companion awaits.
+      <p className="text-gray-600 max-w-xl text-center mb-8">
+        The minimalist, user-friendly way to test your knowledge or learn new things.<br />
+        <span className="hidden sm:inline">Create, flip, and manage your flashcards with ease.</span>
       </p>
       <GoogleLogin
         onSuccess={credentialResponse => {
@@ -32,10 +20,11 @@ function LandingPage() {
         }}
         onError={() => alert('Login Failed')}
       />
-      <div style={{ marginTop: 18, color: "#888", fontSize: 13 }}>
-        Login required to get started.
+      <div className="mt-4 text-xs text-gray-400 text-center">
+        Secure Google sign-in required to start.
       </div>
     </div>
   );
 }
+
 export default LandingPage;
