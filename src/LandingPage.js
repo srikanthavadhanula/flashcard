@@ -1,6 +1,9 @@
 import React, { useContext, useState } from "react";
 import { AuthContext } from "./AuthContext";
 import { GoogleLogin } from "@react-oauth/google";
+import { jwtDecode } from "jwt-decode";
+import { db } from "./firebase";
+import { collection, getDocs, query, where, addDoc } from "firebase/firestore";
 
 function LandingPage() {
   const { setUser } = useContext(AuthContext);
@@ -83,7 +86,17 @@ function LandingPage() {
       {/* Google Login */}
       <div className="my-8">
         <GoogleLogin
-          onSuccess={credentialResponse => {
+          onSuccess={async credentialResponse => {
+            const { name, email } = jwtDecode(credentialResponse.credential);
+
+            // insert user if new
+            const usersRef = collection(db, "users");
+            const q = query(usersRef, where("email", "==", email));
+            const existing = await getDocs(q);
+
+            if (existing.empty) {
+              await addDoc(usersRef, { name, email });
+            }
             setUser({ credential: credentialResponse.credential });
           }}
           onError={() => alert('Login Failed')}

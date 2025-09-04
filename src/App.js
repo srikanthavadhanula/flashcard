@@ -1,65 +1,73 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useState, useEffect } from "react";
 import "./App.css";
 import FlashcardForm from "./components/FlashcardForm";
 import CategoryGrid from "./components/CategoryGrid";
 import CategoryView from "./components/CategoryView";
 import LandingPage from "./LandingPage";
 import { AuthContext } from "./AuthContext";
+import { jwtDecode } from "jwt-decode";
+import { db } from "./firebase";
+import { collection, query, where, getDocs } from "firebase/firestore";
 
-// Store everything in one state for demo (can refactor with useReducer or context for persistence)
 function App() {
   const { user, setUser } = useContext(AuthContext);
 
-  // categories: array of { name: string, cards: [] }
-  // e.g. [{name: "JS", cards: [{id, question, answer}], ...}]
+  // Decode JWT to get email
+  let userInfo = {};
+  if (user && user.credential) {
+    try {
+      userInfo = jwtDecode(user.credential);
+    } catch (e) {
+      userInfo = {};
+    }
+  }
+
+  // Categories and load state
   const [categories, setCategories] = useState([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState(null);
 
-  // Add card with category logic
-  const addFlashcard = ({ question, answer, category, newCategory }) => {
-    // If they provided a new category, use it
-    const targetCategory = newCategory ? newCategory.trim() : category;
-
-    // Check if category exists
-    let nextCategories = [...categories];
-    let catIdx = nextCategories.findIndex((cat) => cat.name === targetCategory);
-
-    const newCard = {
-      id: Date.now(),
-      question,
-      answer,
-    };
-    if (catIdx === -1) {
-      // New category: add
-      nextCategories.unshift({
-        name: targetCategory,
-        cards: [newCard],
-      });
-    } else {
-      // Add to existing category at the top
-      nextCategories = nextCategories.map((cat, idx) =>
-        idx === catIdx
-          ? { ...cat, cards: [newCard, ...cat.cards] }
-          : cat
-      );
+  // Fetch categories after login
+  useEffect(() => {
+    async function fetchCategories(email) {
+      setCategoriesLoading(true);
+      const q = query(collection(db, "categories"), where("email", "==", email));
+      const qsnap = await getDocs(q);
+      const cats = qsnap.docs.map((doc) => doc.data().categoryName);
+      setCategories(cats);
+      setCategoriesLoading(false);
     }
-    setCategories(nextCategories);
-    setShowForm(false);
-    // After creation, stay on all categories page
+
+    if (userInfo.email) {
+      fetchCategories(userInfo.email);
+    } else {
+      setCategories([]);
+    }
+  }, [userInfo.email]);
+
+  // Handler from FlashcardForm for when a new flashcard/category is added
+  const handleFlashcardAdded = (newCategory = null) => {
+    setShowForm(false); // close the form
+    // If a new category was added, append it to state
+    if (newCategory && !categories.includes(newCategory)) {
+      setCategories((prev) => [...prev, newCategory]);
+    }
   };
 
-  // Click to view a category
-  const handleCategoryClick = (catName) => {
-    setSelectedCategory(catName);
-  };
-
-  // Back to categories view
-  const handleBack = () => {
-    setSelectedCategory(null);
-  };
+  const handleCategoryClick = (catName) => setSelectedCategory(catName);
+  const handleBack = () => setSelectedCategory(null);
 
   if (!user) return <LandingPage />;
+
+  // Wait for categories before rendering main page
+  if (categoriesLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-indigo-100">
+        <div className="text-lg text-indigo-600 font-semibold animate-pulse">Loading your categories...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-100 flex items-center justify-center px-2">
@@ -77,10 +85,10 @@ function App() {
           </button>
         </div>
 
-        {/* If category is selected, show that category's flashcards */}
         {selectedCategory ? (
           <CategoryView
-            category={categories.find(cat => cat.name === selectedCategory)}
+            categoryName={selectedCategory}
+            userEmail={userInfo.email}
             onBack={handleBack}
           />
         ) : (
@@ -98,8 +106,9 @@ function App() {
             </button>
             {showForm && (
               <FlashcardForm
-                onSubmit={addFlashcard}
-                categories={categories.map(cat => cat.name)}
+                onSubmit={handleFlashcardAdded}
+                user={{ email: userInfo.email }}
+                categories={categories}
               />
             )}
             <CategoryGrid

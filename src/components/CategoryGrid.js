@@ -28,12 +28,12 @@ function CategoryGrid({ categories, onCategoryClick }) {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {categories.map((cat, idx) => (
             <button
-              key={cat.name}
+              key={cat}
               className={`rounded-2xl p-6 border bg-gradient-to-br ${getColor(idx)} shadow hover:shadow-lg focus:outline-indigo-400 font-bold transition-all text-lg flex flex-col items-center gap-1`}
-              onClick={() => onCategoryClick(cat.name)}
+              onClick={() => onCategoryClick(cat)}
             >
-              <span className="truncate max-w-xs">{cat.name}</span>
-              <span className="text-xs font-normal text-slate-500">{cat.cards.length} {cat.cards.length > 1 ? "Cards" : "Card"}</span>
+              <span className="truncate max-w-xs">{cat}</span>
+              {/* <span className="text-xs font-normal text-slate-500">{cat.cards.length} {cat.cards.length > 1 ? "Cards" : "Card"}</span> */}
             </button>
           ))}
         </div>
