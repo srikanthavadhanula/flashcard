@@ -34,13 +34,17 @@ function FlashcardForm({ onSubmit, user }) {
     if (!question.trim() || !answer.trim() || !cName) return;
     let addedCategory = null;
     // If new category, insert into categories
-    if (useNew && !categories.includes(cName)) {
-      await addDoc(collection(db, "categories"), {
+    if (useNew && !categories.some(cat => cat.categoryName === cName)) {
+      const docRef = await addDoc(collection(db, "categories"), {
         email: user.email,
         categoryName: cName,
       });
+      addedCategory = {
+        id: docRef.id,
+        email: user.email,
+        categoryName: cName,
+      }
       setCategories([...categories, cName]);
-      addedCategory = cName;
     }
     // Insert flashcard
     await addDoc(collection(db, "flashcards"), {

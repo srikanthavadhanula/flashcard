@@ -28,17 +28,21 @@ function App() {
   const [showForm, setShowForm] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState(null);
 
+
+  const fetchCategories = async (email) => {
+    setCategoriesLoading(true);
+    const q = query(collection(db, "categories"), where("email", "==", email));
+    const qsnap = await getDocs(q);
+    const cats = qsnap.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+    setCategories(cats);
+    setCategoriesLoading(false);
+  };
+
   // Fetch categories after login
   useEffect(() => {
-    async function fetchCategories(email) {
-      setCategoriesLoading(true);
-      const q = query(collection(db, "categories"), where("email", "==", email));
-      const qsnap = await getDocs(q);
-      const cats = qsnap.docs.map((doc) => doc.data().categoryName);
-      setCategories(cats);
-      setCategoriesLoading(false);
-    }
-
     if (userInfo.email) {
       fetchCategories(userInfo.email);
     } else {
@@ -50,7 +54,7 @@ function App() {
   const handleFlashcardAdded = (newCategory = null) => {
     setShowForm(false); // close the form
     // If a new category was added, append it to state
-    if (newCategory && !categories.includes(newCategory)) {
+    if (newCategory && !categories.some(cat => cat.id === newCategory.id)) {
       setCategories((prev) => [...prev, newCategory]);
     }
   };
@@ -114,6 +118,8 @@ function App() {
             <CategoryGrid
               categories={categories}
               onCategoryClick={handleCategoryClick}
+              userEmail={userInfo.email}
+              refreshCategories={() => fetchCategories(userInfo.email)}
             />
           </>
         )}
